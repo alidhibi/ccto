@@ -23,6 +23,16 @@ importers:
 
   packages/cli:
     dependencies:
+      '@huggingface/transformers':
+        specifier: ^3.3.3
+        version: 3.8.1
+      better-sqlite3:
+        specifier: ^11.7.0
+        version: 11.10.0
+      web-tree-sitter:
+        specifier: ^0.24.7
+        version: 0.24.7
+    devDependencies:
       '@ccto/core':
         specifier: workspace:*
         version: link:../core
@@ -32,6 +42,15 @@ importers:
       '@ccto/shared':
         specifier: workspace:*
         version: link:../shared
+      '@types/better-sqlite3':
+        specifier: ^7.6.12
+        version: 7.6.13
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.17
+      '@types/react':
+        specifier: ^18.3.18
+        version: 18.3.28
       chalk:
         specifier: ^5.4.1
         version: 5.6.2
@@ -44,13 +63,6 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.17
-      '@types/react':
-        specifier: ^18.3.18
-        version: 18.3.28
       rimraf:
         specifier: ^6.0.1
         version: 6.1.3

@@ -32,6 +32,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Ensure LICENSE in CLI package
+        run: cp -n LICENSE packages/cli/LICENSE 2>/dev/null || true
+
       - name: Publish ccto CLI
         run: pnpm publish --filter ccto --no-git-checks --access public
         env:

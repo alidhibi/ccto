@@ -1,11 +1,12 @@
-# CCTO — Claude Code Token Optimizer
+# ccto — Claude Code Token Optimizer
 
 [![npm](https://img.shields.io/npm/v/ccto)](https://www.npmjs.com/package/ccto)
-[![CI](https://github.com/alidhibi/ccto/actions/workflows/ci.yml/badge.svg)](https://github.com/alidhibi/ccto/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/alidhibi/ccto/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 
 > Reduce Claude Code token consumption by **60–80%** using local semantic indexing and MCP tools.
+
+All processing runs **offline** — no data leaves your machine.
 
 ---
 
@@ -18,18 +19,16 @@ npm install -g ccto
 ## Use
 
 ```bash
-cd mon-projet
+cd your-project
 ccto init
 claude
 ```
 
-After `ccto init`, open Claude Code. CCTO's MCP tools are active immediately.
+That's it. `ccto init` indexes your codebase, registers its MCP server with Claude Code, and updates `CLAUDE.md` — all in one command.
 
 ---
 
-## How it works
-
-CCTO runs a local MCP server that gives Claude smarter ways to read your codebase:
+## Features
 
 | Without CCTO | With CCTO |
 |---|---|
@@ -37,8 +36,6 @@ CCTO runs a local MCP server that gives Claude smarter ways to read your codebas
 | Claude searches by filename | Claude finds code semantically via `semantic_search` |
 | Context resets each session | Persistent memory via `memory_recall` |
 | Full file trees in prompts | Condensed outline via `project_outline` |
-
-All indexing and embeddings run **offline** — no data leaves your machine.
 
 ---
 
@@ -76,8 +73,8 @@ TypeScript · JavaScript · Python · PHP · CSS/SCSS · Bash · SQL
 
 ## Requirements
 
-- **Node.js 20+**
-- **Claude Code** ([claude.ai/code](https://claude.ai/code))
+- Node.js 20+
+- Claude Code ([claude.ai/code](https://claude.ai/code))
 
 > On first `ccto init`, the ONNX embedding model (~80 MB) downloads once to `~/.ccto/models/`.
 
@@ -85,42 +82,20 @@ TypeScript · JavaScript · Python · PHP · CSS/SCSS · Bash · SQL
 
 ## FAQ
 
-**Does CCTO send data to the internet?**
-No. All indexing, embeddings, and search run locally. The only network call is the ONNX model download on first use (~80 MB, one-time).
+**Does ccto send data to the internet?**
+No. All indexing and search are local. Only the ONNX model download is a network call, and it happens once.
 
 **Does `ccto init` overwrite my `CLAUDE.md`?**
-No. It appends a CCTO section. If a CCTO section already exists, it skips the update.
+No. It appends a CCTO section. If one already exists, it skips the update.
 
 **How do I update the index after code changes?**
 Run `ccto index --incremental` to re-index only git-changed files.
 
-**MCP tools are not appearing in Claude Code?**
-Run `ccto doctor` to diagnose. Make sure Claude Code was restarted after `ccto init`.
-
----
-
-## Roadmap
-
-- [ ] Output compression for large test/build logs
-- [ ] Session memory auto-save via Claude Code hooks
-- [ ] Multi-project memory aggregation
-- [ ] VS Code extension
-
----
-
-## Development
-
-```bash
-pnpm install
-pnpm build
-pnpm test
-pnpm lint
-```
-
-See [CLAUDE.md](CLAUDE.md) for architecture details and [docs/](docs/) for deeper documentation.
+**MCP tools not showing up in Claude Code?**
+Run `ccto doctor` and restart Claude Code after `ccto init`.
 
 ---
 
 ## License
 
-[MIT](LICENSE) © alidhibi
+[MIT](https://github.com/alidhibi/ccto/blob/main/LICENSE) © alidhibi

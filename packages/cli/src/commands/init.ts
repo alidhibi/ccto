@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { embed, indexProject, saveConfig, upsertChunks } from '@ccto/core';
@@ -67,10 +68,20 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
 }
 
 function registerMcpServer(projectRoot: string): void {
-  // Claude Code reads MCP config from .claude/settings.json
+  try {
+    execSync('claude mcp add ccto --scope user -- ccto serve', {
+      stdio: 'inherit',
+      cwd: projectRoot,
+    });
+    console.log(chalk.green('  ✓ Registered ccto MCP server via `claude mcp add` (user scope)'));
+    return;
+  } catch {
+    console.log(chalk.dim('  ↓ `claude` CLI not found — falling back to .claude/settings.json'));
+  }
+
+  // Fallback: write directly to .claude/settings.json (project scope)
   const claudeDir = join(projectRoot, '.claude');
   const settingsPath = join(claudeDir, 'settings.json');
-
   mkdirSync(claudeDir, { recursive: true });
 
   let settings: Record<string, unknown> = {};
@@ -81,15 +92,10 @@ function registerMcpServer(projectRoot: string): void {
   }
 
   const mcpServers = (settings.mcpServers as Record<string, unknown> | undefined) ?? {};
-  mcpServers.ccto = {
-    command: 'npx',
-    args: ['ccto-mcp'],
-    env: { CCTO_PROJECT_ROOT: projectRoot },
-  };
+  mcpServers.ccto = { command: 'ccto', args: ['serve'] };
   settings.mcpServers = mcpServers;
-
   writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf-8');
-  console.log(chalk.green('  ✓ Registered ccto-mcp in .claude/settings.json'));
+  console.log(chalk.green('  ✓ Registered ccto MCP server in .claude/settings.json'));
 }
 
 function generateClaudeMd(projectRoot: string, fileCount: number, symbolCount: number): void {

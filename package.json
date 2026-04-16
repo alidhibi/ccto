@@ -19,7 +19,8 @@
     "format": "biome format . --write",
     "check": "biome check . --write",
     "typecheck": "pnpm -r typecheck",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "release:dry": "pnpm build && cd packages/cli && npm pack --dry-run"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

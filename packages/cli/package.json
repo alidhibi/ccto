@@ -1,21 +1,42 @@
 {
   "name": "ccto",
   "version": "0.1.0",
-  "type": "module",
+  "description": "Claude Code Token Optimizer — reduce token usage by 60–80% with local semantic indexing and MCP tools",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "mcp",
+    "token-optimizer",
+    "semantic-search",
+    "ai-tools",
+    "developer-tools"
+  ],
+  "author": "alidhibi",
   "license": "MIT",
-  "description": "Claude Code Token Optimizer CLI",
+  "homepage": "https://github.com/alidhibi/ccto#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alidhibi/ccto.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/alidhibi/ccto/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "ccto": "./dist/index.js"
   },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts",
     "dev": "tsup src/index.ts --watch",
@@ -23,15 +44,19 @@
     "clean": "rimraf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "@huggingface/transformers": "^3.3.3",
+    "web-tree-sitter": "^0.24.7"
+  },
+  "devDependencies": {
     "@ccto/core": "workspace:*",
     "@ccto/mcp-server": "workspace:*",
     "@ccto/shared": "workspace:*",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "ink": "^5.1.0",
-    "react": "^18.3.1"
-  },
-  "devDependencies": {
+    "react": "^18.3.1",
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.18",
     "rimraf": "^6.0.1",
