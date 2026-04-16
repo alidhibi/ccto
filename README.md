@@ -12,7 +12,7 @@
 ## Install
 
 ```bash
-npm install -g ccto
+npm install -g @alidhibi/ccto
 ```
 
 ## Use

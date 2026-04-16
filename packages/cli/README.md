@@ -13,7 +13,7 @@ All processing runs **offline** — no data leaves your machine.
 ## Install
 
 ```bash
-npm install -g ccto
+npm install -g @alidhibi/ccto
 ```
 
 ## Use

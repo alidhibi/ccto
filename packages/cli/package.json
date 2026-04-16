@@ -1,5 +1,5 @@
 {
-  "name": "ccto",
+  "name": "@alidhibi/ccto",
   "version": "0.1.0",
   "description": "Claude Code Token Optimizer — reduce token usage by 60–80% with local semantic indexing and MCP tools",
   "keywords": [
