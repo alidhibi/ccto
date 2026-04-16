@@ -1,6 +1,6 @@
 # ccto — Claude Code Token Optimizer
 
-[![npm](https://img.shields.io/npm/v/ccto)](https://www.npmjs.com/package/ccto)
+[![npm](https://img.shields.io/npm/v/@alidhibi/ccto)](https://www.npmjs.com/package/@alidhibi/ccto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/alidhibi/ccto/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 
