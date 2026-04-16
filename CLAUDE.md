@@ -138,3 +138,24 @@ class EmbeddingError extends CctoError {}
 **Known setup note:** `better-sqlite3` requires native compilation. On Node 25 + Windows with VS2022 BuildTools (no ClangCL), patch `C:/Users/<USER>/AppData/Local/node-gyp/Cache/<NODE_VERSION>/include/node/common.gypi` replacing `ClangCL` → `v143`, then rebuild via `node-gyp rebuild --release` in the `better-sqlite3` package dir.
 
 After each change: run `pnpm test && pnpm check`, then update this file.
+
+
+## CCTO Token Optimization
+
+CCTO is active in this project. 54 files indexed, 27 symbol outlines extracted.
+
+### MCP Tools Available
+
+Use these tools instead of reading files directly to save tokens:
+
+- **`semantic_search`** — Find relevant code by description (e.g. `semantic_search("authentication middleware")`)
+- **`smart_read`** — Read a file outline first, then fetch specific sections
+- **`project_outline`** — Get a condensed project tree with language tags
+- **`memory_recall`** — Search past session summaries
+
+### Workflow
+
+1. Start with `project_outline` for a new task
+2. Use `semantic_search` to find relevant code before reading files
+3. Use `smart_read filepath` to see a file's outline before fetching specific sections
+4. Re-index after large changes: `ccto index --incremental`

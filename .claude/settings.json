@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ccto": {
+      "command": "npx",
+      "args": [
+        "ccto-mcp"
+      ],
+      "env": {
+        "CCTO_PROJECT_ROOT": "C:\\projects\\2026\\ccto"
+      }
+    }
+  }
+}
