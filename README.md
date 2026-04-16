@@ -42,6 +42,14 @@ All indexing and embeddings run **offline** — no data leaves your machine.
 
 ---
 
+## Screenshots
+
+`ccto stats` — token savings dashboard:
+
+![ccto stats](docs/screenshots/ccto-stats.png)
+
+---
+
 ## CLI Commands
 
 | Command | Description |
