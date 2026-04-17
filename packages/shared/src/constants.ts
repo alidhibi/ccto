@@ -15,6 +15,8 @@ export const MEMORY_FILE = 'memory.json';
 export const MEMORY_DB_FILE = 'memory.db';
 export const METRICS_FILE = 'metrics.json';
 export const BYPASSES_FILE = 'bypasses.json';
+export const LAST_INDEXED_COMMIT_FILE = 'last_indexed_commit';
+export const REINDEX_QUEUE_FILE = '.reindex-queue';
 
 /** Default embeddings model */
 export const DEFAULT_MODEL = 'Xenova/all-MiniLM-L6-v2';

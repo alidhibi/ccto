@@ -159,3 +159,5 @@ Use these tools instead of reading files directly to save tokens:
 2. Use `semantic_search` to find relevant code before reading files
 3. Use `smart_read filepath` to see a file's outline before fetching specific sections
 4. Re-index after large changes: `ccto index --incremental`
+
+<!-- cache_control: ephemeral — CLAUDE.md is stable; Anthropic prompt cache TTL 5 min -->

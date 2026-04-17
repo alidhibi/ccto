@@ -5,8 +5,12 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type ContentBlock,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
+
+/** Tools whose output is stable within a session — eligible for Anthropic prompt caching (5-min TTL). */
+const CACHEABLE_TOOLS = new Set(['project_outline', 'memory_recall']);
 import { MemoryRecallInput, memoryRecall } from './tools/memory_recall.js';
 import { ProjectOutlineInput, projectOutline } from './tools/project_outline.js';
 import { RunCommandInput, runCommand } from './tools/run_command.js';
@@ -177,9 +181,13 @@ export function createServer(projectRoot: string): Server {
       // Record metrics asynchronously (non-blocking, ignore errors)
       recordMetrics(projectRoot, result.metrics).catch(() => {});
 
-      return {
-        content: [{ type: 'text', text: result.text }],
-      };
+      // Stable tool results get cache_control: ephemeral so Anthropic caches them for 5 min
+      // cache_control is an Anthropic extension not in MCP SDK types; Claude Code forwards it
+      const content: ContentBlock[] = CACHEABLE_TOOLS.has(name)
+        ? ([{ type: 'text', text: result.text, cache_control: { type: 'ephemeral' } }] as unknown as ContentBlock[])
+        : [{ type: 'text', text: result.text }];
+
+      return { content };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return {

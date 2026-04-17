@@ -25,8 +25,9 @@ program
   .command('init')
   .description('Index project, configure MCP server, and update CLAUDE.md')
   .option('-p, --project <path>', 'Project root (default: cwd)')
+  .option('--git-hook', 'Install git post-commit hook for background incremental indexing')
   .action(async (opts) => {
-    await runInit({ projectRoot: opts.project });
+    await runInit({ projectRoot: opts.project, gitHook: opts.gitHook });
   });
 
 program
@@ -34,8 +35,10 @@ program
   .description('Re-index all files (or only changed files with --incremental)')
   .option('-p, --project <path>', 'Project root (default: cwd)')
   .option('-i, --incremental', 'Only re-index files changed since last git commit')
+  .option('--full', 'Force full reindex, ignoring previous state')
+  .option('-q, --quiet', 'Suppress all console output')
   .action(async (opts) => {
-    await runIndex({ projectRoot: opts.project, incremental: opts.incremental });
+    await runIndex({ projectRoot: opts.project, incremental: opts.incremental, full: opts.full, quiet: opts.quiet });
   });
 
 program

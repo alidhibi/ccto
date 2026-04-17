@@ -162,6 +162,49 @@ export function isIndexed(projectRoot: string, filepath: string): boolean {
 export function deleteByFile(projectRoot: string, filepath: string): void {
   const db = openDb(projectRoot);
   db.prepare('DELETE FROM chunks WHERE filepath = ?').run(filepath);
+  db.prepare('DELETE FROM file_index WHERE filepath = ?').run(filepath);
+}
+
+/**
+ * Look up the stored content hash for a file.
+ * @param projectRoot - Absolute path to the project root
+ * @param filepath - File path to check
+ * @returns Stored hash, or null if the file has never been indexed
+ */
+export function getFileHash(projectRoot: string, filepath: string): string | null {
+  const db = openDb(projectRoot);
+  const row = db
+    .prepare('SELECT file_hash FROM file_index WHERE filepath = ?')
+    .get(filepath) as { file_hash: string } | undefined;
+  return row?.file_hash ?? null;
+}
+
+/**
+ * Record a file's content hash and indexing timestamp.
+ * @param projectRoot - Absolute path to the project root
+ * @param filepath - The indexed file path
+ * @param fileHash - SHA-256 of the file's full content
+ */
+export function upsertFileHash(projectRoot: string, filepath: string, fileHash: string): void {
+  const db = openDb(projectRoot);
+  db.prepare(
+    `INSERT INTO file_index (filepath, file_hash, indexed_at)
+     VALUES (?, ?, ?)
+     ON CONFLICT(filepath) DO UPDATE SET file_hash = excluded.file_hash, indexed_at = excluded.indexed_at`,
+  ).run(filepath, fileHash, new Date().toISOString());
+}
+
+/**
+ * Return all file paths currently tracked in the file index.
+ * @param projectRoot - Absolute path to the project root
+ * @returns Array of absolute file paths
+ */
+export function getKnownFiles(projectRoot: string): string[] {
+  const db = openDb(projectRoot);
+  const rows = db
+    .prepare('SELECT filepath FROM file_index')
+    .all() as { filepath: string }[];
+  return rows.map((r) => r.filepath);
 }
 
 /**

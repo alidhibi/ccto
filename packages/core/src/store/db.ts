@@ -69,5 +69,11 @@ function migrate(db: Database.Database): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_embeddings_chunk ON embeddings(chunk_id);
+
+    CREATE TABLE IF NOT EXISTS file_index (
+      filepath    TEXT PRIMARY KEY,
+      file_hash   TEXT NOT NULL,
+      indexed_at  TEXT NOT NULL
+    );
   `);
 }

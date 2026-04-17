@@ -1,7 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { CCTO_DIR, MEMORY_FILE } from '@ccto/shared';
-import type { CallMetrics, MemoryEntry } from '@ccto/shared';
+import { searchSessions } from '@ccto/core';
+import type { CallMetrics } from '@ccto/shared';
 import { z } from 'zod';
 
 export const MemoryRecallInput = z.object({
@@ -13,14 +11,14 @@ export type MemoryRecallInput = z.infer<typeof MemoryRecallInput>;
 
 /**
  * Search persistent session memory for relevant entries.
- * Phase 2 stub — does simple text matching until full semantic memory is implemented.
+ * @param projectRoot - Absolute path to the project root
+ * @param input - Validated search parameters
+ * @returns Compact session context (<500 tokens) and call metrics
  */
 export async function memoryRecall(
   projectRoot: string,
   input: MemoryRecallInput,
 ): Promise<{ text: string; metrics: CallMetrics }> {
-  const memoryPath = join(projectRoot, CCTO_DIR, MEMORY_FILE);
-
   const metrics: CallMetrics = {
     tool: 'memory_recall',
     tokensRequested: 0,
@@ -29,38 +27,33 @@ export async function memoryRecall(
     timestamp: new Date().toISOString(),
   };
 
-  if (!existsSync(memoryPath)) {
+  let matches;
+  try {
+    matches = searchSessions(projectRoot, input.query, input.limit);
+  } catch {
     return {
       text: '_No session memory found. Run `ccto init` to enable memory persistence._',
       metrics,
     };
   }
 
-  let entries: MemoryEntry[] = [];
-  try {
-    entries = JSON.parse(readFileSync(memoryPath, 'utf-8')) as MemoryEntry[];
-  } catch {
-    return { text: '_Failed to read memory file._', metrics };
-  }
-
-  const queryLower = input.query.toLowerCase();
-  const matches = entries
-    .filter(
-      (e) =>
-        e.summary.toLowerCase().includes(queryLower) ||
-        e.tags.some((t) => t.toLowerCase().includes(queryLower)),
-    )
-    .slice(0, input.limit);
-
   if (matches.length === 0) {
     return { text: `_No memories matching "${input.query}"._`, metrics };
   }
 
-  const lines = matches.map(
-    (e) => `**[${e.timestamp}]** ${e.summary}${e.tags.length ? ` (${e.tags.join(', ')})` : ''}`,
-  );
+  const lines = matches.map((e) => {
+    const date = e.timestamp.slice(0, 16).replace('T', ' ');
+    const filesNote =
+      e.filesTouched.length > 0
+        ? `Files: ${e.filesTouched.slice(0, 5).join(', ')}${e.filesTouched.length > 5 ? ` +${e.filesTouched.length - 5} more` : ''}`
+        : '';
+    const tagsNote = e.tags.length > 0 ? `Tags: ${e.tags.join(', ')}` : '';
+    const meta = [filesNote, tagsNote].filter(Boolean).join(' | ');
+    return `**[${date}]** ${e.summary}${meta ? `\n  ${meta}` : ''}`;
+  });
 
-  const text = `### Memories matching "${input.query}"\n\n${lines.join('\n\n')}`;
+  const text = `### Session memory: "${input.query}"\n\n${lines.join('\n\n')}`;
+
   metrics.tokensServed = Math.ceil(text.length / 4);
 
   return { text, metrics };

@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { embed, indexProject, saveConfig, upsertChunks } from '@ccto/core';
 import { CCTO_DIR, type CctoConfig, DEFAULT_CONFIG, formatDuration } from '@ccto/shared';
@@ -7,6 +7,7 @@ import chalk from 'chalk';
 
 interface InitOptions {
   projectRoot?: string;
+  gitHook?: boolean;
 }
 
 export async function runInit(options: InitOptions = {}): Promise<void> {
@@ -59,6 +60,11 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
 
   // Register session memory hooks
   registerHooks(projectRoot);
+
+  // Install git post-commit hook if requested
+  if (options.gitHook) {
+    registerGitHook(projectRoot);
+  }
 
   // Generate CLAUDE.md
   generateClaudeMd(projectRoot, result.indexed, outlines.length);
@@ -140,6 +146,42 @@ function registerHooks(projectRoot: string): void {
   settings.hooks = hooks;
   writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf-8');
   console.log(chalk.green('  ✓ Registered session memory hooks in .claude/settings.json'));
+}
+
+function registerGitHook(projectRoot: string): void {
+  const gitDir = join(projectRoot, '.git');
+  if (!existsSync(gitDir)) {
+    console.log(chalk.yellow('  ⚠ No .git directory found — skipping git hook'));
+    return;
+  }
+  const hooksDir = join(gitDir, 'hooks');
+  mkdirSync(hooksDir, { recursive: true });
+  const hookPath = join(hooksDir, 'post-commit');
+
+  const hookScript = [
+    '#!/usr/bin/env sh',
+    '# Added by ccto init --git-hook',
+    'ccto index --incremental --quiet &',
+  ].join('\n') + '\n';
+
+  if (existsSync(hookPath)) {
+    const existing = readFileSync(hookPath, 'utf-8');
+    if (existing.includes('ccto index')) {
+      console.log(chalk.dim('  ↓ git post-commit hook already has ccto, skipping'));
+      return;
+    }
+    writeFileSync(hookPath, `${existing}\n${hookScript}`, 'utf-8');
+  } else {
+    writeFileSync(hookPath, hookScript, 'utf-8');
+  }
+
+  try {
+    chmodSync(hookPath, 0o755);
+  } catch {
+    // Windows — chmod is a no-op, git handles it
+  }
+
+  console.log(chalk.green('  ✓ Installed git post-commit hook (.git/hooks/post-commit)'));
 }
 
 function generateClaudeMd(projectRoot: string, fileCount: number, symbolCount: number): void {
