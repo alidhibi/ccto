@@ -3,3 +3,5 @@ export * from './embeddings/index.js';
 export * from './store/index.js';
 export * from './config/index.js';
 export * from './metrics/index.js';
+export * from './memory/index.js';
+export * from './compressor/index.js';

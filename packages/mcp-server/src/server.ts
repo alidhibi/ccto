@@ -9,6 +9,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { MemoryRecallInput, memoryRecall } from './tools/memory_recall.js';
 import { ProjectOutlineInput, projectOutline } from './tools/project_outline.js';
+import { RunCommandInput, runCommand } from './tools/run_command.js';
 import { SemanticSearchInput, semanticSearch } from './tools/semantic_search.js';
 import { SmartReadInput, smartRead } from './tools/smart_read.js';
 
@@ -71,6 +72,31 @@ const TOOLS: Tool[] = [
     },
   },
   {
+    name: 'run_command',
+    description:
+      'MANDATORY for running tests, builds, or any long-running command. NEVER use the Bash tool for these — use run_command instead. ' +
+      'Executes a shell command and returns compressed output (50–90% token savings). ' +
+      'Automatically detects output type (test/build/log) and applies the appropriate compressor: ' +
+      'test output keeps failures verbatim + summary; build output keeps errors/warnings + summary; log output keeps head+tail. ' +
+      'Examples: run_command({command:"pnpm test"}), run_command({command:"tsc --noEmit"}), run_command({command:"pnpm build"}).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        command: {
+          type: 'string',
+          description: 'Shell command to run (e.g. "pnpm test", "tsc --noEmit", "pnpm build")',
+        },
+        cwd: { type: 'string', description: 'Working directory (default: project root)' },
+        timeout: {
+          type: 'number',
+          description: 'Timeout in milliseconds (default: 30 000)',
+          default: 30000,
+        },
+      },
+      required: ['command'],
+    },
+  },
+  {
     name: 'memory_recall',
     description:
       'Search persistent session memory for relevant past context, decisions, and file edits. ' +
@@ -100,8 +126,9 @@ export function createServer(projectRoot: string): Server {
         'CCTO token optimizer is active. Rules:\n' +
         '1. MANDATORY: Use smart_read instead of Read for any file over 200 lines.\n' +
         '2. MANDATORY: Use semantic_search before Grep or any keyword search.\n' +
-        '3. Start every session with memory_recall to recover prior context.\n' +
-        '4. Use project_outline instead of listing multiple directories.\n' +
+        '3. MANDATORY: Use run_command instead of Bash for tests, builds, and long commands.\n' +
+        '4. Start every session with memory_recall to recover prior context.\n' +
+        '5. Use project_outline instead of listing multiple directories.\n' +
         'Violating these rules wastes tokens unnecessarily.',
     },
   );
@@ -128,6 +155,11 @@ export function createServer(projectRoot: string): Server {
         case 'project_outline': {
           const input = ProjectOutlineInput.parse(args ?? {});
           result = await projectOutline(projectRoot, input);
+          break;
+        }
+        case 'run_command': {
+          const input = RunCommandInput.parse(args);
+          result = await runCommand(projectRoot, input);
           break;
         }
         case 'memory_recall': {

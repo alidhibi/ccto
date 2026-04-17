@@ -161,6 +161,7 @@ These rules MUST be followed to avoid wasting tokens:
 
 - **Any file over 200 lines**: ALWAYS use \`smart_read\` — NEVER use \`Read\` directly
 - **Any code search**: ALWAYS use \`semantic_search\` BEFORE \`Grep\` or keyword search
+- **Tests, builds, long commands**: ALWAYS use \`run_command\` — NEVER use \`Bash\` for these
 - **Project overview**: use \`project_outline\` instead of listing multiple directories
 - **Session start**: call \`memory_recall\` first to recover prior context and decisions
 
@@ -175,6 +176,10 @@ CCTO is active in this project. ${fileCount} files indexed, ${symbolCount} symbo
   - \`smart_read({filepath})\` → outline only
   - \`smart_read({filepath, section:"functionName"})\` → outline + function body
   - \`smart_read({filepath, lines:[10,50]})\` → outline + line range
+- **\`run_command\`** — MANDATORY for tests/builds. Runs a shell command and returns compressed output (50–90% token savings). Auto-detects test/build/log output type.
+  - \`run_command({command:"pnpm test"})\` → compressed test output (failures verbatim + summary)
+  - \`run_command({command:"tsc --noEmit"})\` → only errors/warnings + final line
+  - \`run_command({command:"pnpm build"})\` → build errors + summary
 - **\`project_outline\`** — Condensed project tree with language tags
 - **\`memory_recall\`** — Recover past session summaries, file edits, and decisions
 
