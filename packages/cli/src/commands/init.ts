@@ -57,6 +57,9 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   // Register MCP server with Claude Code
   registerMcpServer(projectRoot);
 
+  // Register session memory hooks
+  registerHooks(projectRoot);
+
   // Generate CLAUDE.md
   generateClaudeMd(projectRoot, result.indexed, outlines.length);
 
@@ -98,38 +101,90 @@ function registerMcpServer(projectRoot: string): void {
   console.log(chalk.green('  ✓ Registered ccto MCP server in .claude/settings.json'));
 }
 
+function registerHooks(projectRoot: string): void {
+  const claudeDir = join(projectRoot, '.claude');
+  const settingsPath = join(claudeDir, 'settings.json');
+  mkdirSync(claudeDir, { recursive: true });
+
+  let settings: Record<string, unknown> = {};
+  if (existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf-8')) as Record<string, unknown>;
+    } catch {}
+  }
+
+  const hooks = (settings.hooks as Record<string, unknown[]> | undefined) ?? {};
+
+  const stopHook = { type: 'command', command: 'ccto memory save-session' };
+  const trackHook = { type: 'command', command: 'ccto memory track-file' };
+
+  const stopHooks = (hooks['Stop'] as { matcher: string; hooks: unknown[] }[] | undefined) ?? [];
+  if (!stopHooks.some((h) => h.hooks?.some((hh) => (hh as { command?: string }).command === stopHook.command))) {
+    stopHooks.push({ matcher: '', hooks: [stopHook] });
+  }
+  hooks['Stop'] = stopHooks;
+
+  const postHooks = (hooks['PostToolUse'] as { matcher: string; hooks: unknown[] }[] | undefined) ?? [];
+  if (!postHooks.some((h) => h.hooks?.some((hh) => (hh as { command?: string }).command === trackHook.command))) {
+    postHooks.push({ matcher: 'Edit|Write|MultiEdit', hooks: [trackHook] });
+  }
+  hooks['PostToolUse'] = postHooks;
+
+  const bypassHook = { type: 'command', command: 'ccto metrics track-bypass' };
+  const preHooks = (hooks['PreToolUse'] as { matcher: string; hooks: unknown[] }[] | undefined) ?? [];
+  if (!preHooks.some((h) => h.hooks?.some((hh) => (hh as { command?: string }).command === bypassHook.command))) {
+    preHooks.push({ matcher: 'Read', hooks: [bypassHook] });
+  }
+  hooks['PreToolUse'] = preHooks;
+
+  settings.hooks = hooks;
+  writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf-8');
+  console.log(chalk.green('  ✓ Registered session memory hooks in .claude/settings.json'));
+}
+
 function generateClaudeMd(projectRoot: string, fileCount: number, symbolCount: number): void {
   const claudeMdPath = join(projectRoot, 'CLAUDE.md');
 
   // Don't overwrite if it already exists and has content
   if (existsSync(claudeMdPath)) {
     const existing = readFileSync(claudeMdPath, 'utf-8');
-    if (existing.includes('CCTO is active')) {
+    if (existing.includes('Tool Usage Rules (MANDATORY)') || existing.includes('CCTO is active')) {
       console.log(chalk.dim('  ↓ CLAUDE.md already has CCTO section, skipping'));
       return;
     }
   }
 
   const cctoSection = `
+## Tool Usage Rules (MANDATORY)
+
+These rules MUST be followed to avoid wasting tokens:
+
+- **Any file over 200 lines**: ALWAYS use \`smart_read\` — NEVER use \`Read\` directly
+- **Any code search**: ALWAYS use \`semantic_search\` BEFORE \`Grep\` or keyword search
+- **Project overview**: use \`project_outline\` instead of listing multiple directories
+- **Session start**: call \`memory_recall\` first to recover prior context and decisions
+
 ## CCTO Token Optimization
 
 CCTO is active in this project. ${fileCount} files indexed, ${symbolCount} symbol outlines extracted.
 
 ### MCP Tools Available
 
-Use these tools instead of reading files directly to save tokens:
-
-- **\`semantic_search\`** — Find relevant code by description (e.g. \`semantic_search("authentication middleware")\`)
-- **\`smart_read\`** — Read a file outline first, then fetch specific sections
-- **\`project_outline\`** — Get a condensed project tree with language tags
-- **\`memory_recall\`** — Search past session summaries
+- **\`semantic_search\`** — Find relevant code by description (e.g. \`semantic_search("authentication middleware")\`). Use BEFORE Grep.
+- **\`smart_read\`** — Returns file outline first, then appends a specific section on request. MANDATORY for files >200 lines.
+  - \`smart_read({filepath})\` → outline only
+  - \`smart_read({filepath, section:"functionName"})\` → outline + function body
+  - \`smart_read({filepath, lines:[10,50]})\` → outline + line range
+- **\`project_outline\`** — Condensed project tree with language tags
+- **\`memory_recall\`** — Recover past session summaries, file edits, and decisions
 
 ### Workflow
 
-1. Start with \`project_outline\` for a new task
-2. Use \`semantic_search\` to find relevant code before reading files
-3. Use \`smart_read filepath\` to see a file's outline before fetching specific sections
-4. Re-index after large changes: \`ccto index --incremental\`
+1. \`memory_recall("task description")\` — recover prior context
+2. \`project_outline\` — orient yourself in the project
+3. \`semantic_search("what you need")\` — find relevant code
+4. \`smart_read filepath\` — inspect a file's outline before fetching sections
+5. Re-index after large changes: \`ccto index --incremental\`
 `;
 
   if (existsSync(claudeMdPath)) {

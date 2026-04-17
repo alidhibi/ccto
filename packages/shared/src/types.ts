@@ -85,7 +85,15 @@ export interface MemoryEntry {
   sessionId: string;
   timestamp: string;
   summary: string;
+  filesTouched: string[];
   tags: string[];
+}
+
+/** A detected native-Read bypass on an indexed file */
+export interface BypassRecord {
+  filepath: string;
+  estimatedTokens: number;
+  timestamp: string;
 }
 
 /** Token savings metrics for a single MCP tool call */

@@ -16,7 +16,8 @@ const TOOLS: Tool[] = [
   {
     name: 'semantic_search',
     description:
-      'Search for semantically relevant code chunks using natural language or code queries. Returns the most relevant function/class/block snippets with file locations and similarity scores.',
+      'ALWAYS use this BEFORE Grep or any file search. Find semantically relevant code by natural language — returns function/class/block snippets with file locations and similarity scores. ' +
+      'Examples: semantic_search("authentication middleware"), semantic_search("database connection pool"), semantic_search("error handling in API routes").',
     inputSchema: {
       type: 'object',
       properties: {
@@ -31,14 +32,26 @@ const TOOLS: Tool[] = [
   {
     name: 'smart_read',
     description:
-      'Read a file intelligently: returns an outline (signatures only) by default. Use the `section` parameter to fetch a specific symbol by name or a line range. Saves tokens vs reading the full file.',
+      'MANDATORY for any file over 200 lines. NEVER use the Read tool on large files — use smart_read instead. ' +
+      'Returns the file outline (all symbol signatures) first, then appends the requested section. Saves 60–90% tokens vs full file reads. ' +
+      'Workflow: (1) call smart_read with filepath only → see outline; (2) call again with section or lines to fetch the specific part you need. ' +
+      'Examples: smart_read({filepath:"/src/server.ts"}) → outline; ' +
+      'smart_read({filepath:"/src/server.ts", section:"createServer"}) → outline + createServer body; ' +
+      'smart_read({filepath:"/src/server.ts", lines:[84,133]}) → outline + lines 84–133.',
     inputSchema: {
       type: 'object',
       properties: {
         filepath: { type: 'string', description: 'Absolute path to the file' },
         section: {
           type: 'string',
-          description: 'Symbol name (e.g. "myFunction") or line range (e.g. "10-50")',
+          description: 'Symbol name to fetch (e.g. "createServer", "UserService")',
+        },
+        lines: {
+          type: 'array',
+          items: { type: 'number' },
+          minItems: 2,
+          maxItems: 2,
+          description: 'Exact line range [start, end] to fetch (e.g. [84, 133])',
         },
       },
       required: ['filepath'],
@@ -47,7 +60,9 @@ const TOOLS: Tool[] = [
   {
     name: 'project_outline',
     description:
-      'Get a condensed project directory tree with language tags and index statistics. Use this for an overview of the project structure.',
+      'Get a condensed project directory tree with language tags and index statistics. ' +
+      'Use this INSTEAD of reading multiple files to understand project structure. ' +
+      'Always call this at the start of a new task to orient yourself.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -58,7 +73,8 @@ const TOOLS: Tool[] = [
   {
     name: 'memory_recall',
     description:
-      'Search persistent session memory for relevant past context, decisions, and summaries.',
+      'Search persistent session memory for relevant past context, decisions, and file edits. ' +
+      'Call this FIRST at the start of any session to recover prior context before exploring the codebase.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -78,7 +94,16 @@ export function createServer(projectRoot: string): Server {
 
   const server = new Server(
     { name: 'ccto', version: CCTO_VERSION },
-    { capabilities: { tools: {} } },
+    {
+      capabilities: { tools: {} },
+      instructions:
+        'CCTO token optimizer is active. Rules:\n' +
+        '1. MANDATORY: Use smart_read instead of Read for any file over 200 lines.\n' +
+        '2. MANDATORY: Use semantic_search before Grep or any keyword search.\n' +
+        '3. Start every session with memory_recall to recover prior context.\n' +
+        '4. Use project_outline instead of listing multiple directories.\n' +
+        'Violating these rules wastes tokens unnecessarily.',
+    },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));

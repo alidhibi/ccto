@@ -2,9 +2,15 @@
 import { CCTO_VERSION } from '@ccto/shared';
 import { Command } from 'commander';
 import { runDoctor } from './commands/doctor.js';
+import { runMetricsTrackBypass } from './commands/metrics.js';
 import { runIndex } from './commands/index.js';
 import { runInit } from './commands/init.js';
-import { runMemoryClear, runMemoryList } from './commands/memory.js';
+import {
+  runMemoryClear,
+  runMemoryList,
+  runMemorySaveSession,
+  runMemoryTrackFile,
+} from './commands/memory.js';
 import { runServe } from './commands/serve.js';
 import { runStats } from './commands/stats.js';
 
@@ -64,6 +70,32 @@ memory
   .option('-p, --project <path>', 'Project root (default: cwd)')
   .action((opts) => {
     runMemoryClear({ projectRoot: opts.project });
+  });
+
+memory
+  .command('save-session')
+  .description('Save current session summary to memory (called by Stop hook)')
+  .option('-p, --project <path>', 'Project root (default: cwd)')
+  .action(async (opts) => {
+    await runMemorySaveSession({ projectRoot: opts.project });
+  });
+
+memory
+  .command('track-file')
+  .description('Record an edited file from hook stdin (called by PostToolUse hook)')
+  .option('-p, --project <path>', 'Project root (default: cwd)')
+  .action(async (opts) => {
+    await runMemoryTrackFile({ projectRoot: opts.project });
+  });
+
+const metrics = program.command('metrics').description('Internal metrics hooks');
+
+metrics
+  .command('track-bypass')
+  .description('Record a native Read on an indexed file (called by PreToolUse hook)')
+  .option('-p, --project <path>', 'Project root (default: cwd)')
+  .action(async (opts) => {
+    await runMetricsTrackBypass({ projectRoot: opts.project });
   });
 
 program

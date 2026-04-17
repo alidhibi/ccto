@@ -12,7 +12,9 @@ export const CCTO_DIR = '.ccto';
 export const CONFIG_FILE = 'config.json';
 export const DB_FILE = 'index.db';
 export const MEMORY_FILE = 'memory.json';
+export const MEMORY_DB_FILE = 'memory.db';
 export const METRICS_FILE = 'metrics.json';
+export const BYPASSES_FILE = 'bypasses.json';
 
 /** Default embeddings model */
 export const DEFAULT_MODEL = 'Xenova/all-MiniLM-L6-v2';

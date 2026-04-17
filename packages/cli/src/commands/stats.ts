@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { join } from 'node:path';
-import { getStats } from '@ccto/core';
+import { getBypassStats, getStats } from '@ccto/core';
 import { CCTO_DIR, type CallMetrics, METRICS_FILE, formatBytes } from '@ccto/shared';
 import chalk from 'chalk';
 
@@ -65,6 +65,26 @@ export function runStats(options: StatsOptions = {}): void {
     } catch {
       // metrics file corrupt
     }
+  }
+
+  // Bypass stats
+  try {
+    const bypass = getBypassStats(projectRoot);
+    if (bypass.bypassCount > 0) {
+      console.log(`\n  ${chalk.bold.yellow('Potential Savings Missed')}`);
+      console.log(
+        `    Native Read bypasses : ${chalk.yellow(bypass.bypassCount)} (indexed files read without smart_read)`,
+      );
+      console.log(
+        `    Est. tokens wasted   : ${chalk.yellow(bypass.totalBypassedTokens.toLocaleString())}`,
+      );
+      console.log(
+        `    Est. cost wasted     : ${chalk.yellow(`$${((bypass.totalBypassedTokens / 1_000_000) * 3).toFixed(4)}`)} (at $3/1M tokens)`,
+      );
+      console.log(chalk.dim('    → Use smart_read instead of Read for indexed files.'));
+    }
+  } catch {
+    // bypass file may not exist yet
   }
 
   console.log();

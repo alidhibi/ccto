@@ -145,6 +145,20 @@ export function search(
  * Delete all chunks and embeddings for a specific file.
  * Used for incremental re-indexing of a changed file.
  */
+/**
+ * Check whether a file has any indexed chunks in the store.
+ * @param projectRoot - Absolute path to the project root
+ * @param filepath - File path to check
+ * @returns true if the file has at least one chunk indexed
+ */
+export function isIndexed(projectRoot: string, filepath: string): boolean {
+  const db = openDb(projectRoot);
+  const row = db
+    .prepare('SELECT COUNT(*) as cnt FROM chunks WHERE filepath = ?')
+    .get(filepath) as { cnt: number };
+  return row.cnt > 0;
+}
+
 export function deleteByFile(projectRoot: string, filepath: string): void {
   const db = openDb(projectRoot);
   db.prepare('DELETE FROM chunks WHERE filepath = ?').run(filepath);
